@@ -9,7 +9,8 @@
     <div class="quick-actions">
       <h2>Acciones Rápidas</h2>
       <div class="actions-grid">
-        <router-link to="/professor/silabos/nuevo" class="action-card">
+        <!-- CAMBIAR ESTA LÍNEA: /professor/silabos/nuevo por /professor/crear-silabo -->
+        <router-link to="/professor/crear-silabo" class="action-card">
           <h3>Crear Nuevo Sílabo</h3>
           <p>Desarrollar un nuevo sílabo desde cero</p>
         </router-link>

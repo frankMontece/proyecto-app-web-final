@@ -463,4 +463,77 @@ export const formatValidationErrors = (errors) => {
     return `${index + 1}. ${error}`
   }).join('\n')
 }
+
+// ========== VALIDACIÓN DE DATOS GENERALES DEL SÍLABO ==========
+
+/**
+ * Validar datos generales del sílabo
+ * @param {Object} data - Objeto con datos del sílabo
+ * @returns {Object} { isValid: boolean, errors: Object }
+ */
+export const validateGeneralData = (data) => {
+  const errors = {}
+  let isValid = true
+
+  // Validar unidad académica
+  if (!data.unidadAcademica) {
+    errors.unidadAcademica = 'La unidad académica es requerida'
+    isValid = false
+  }
+
+  // Validar carrera
+  if (!data.carrera) {
+    errors.carrera = 'La carrera es requerida'
+    isValid = false
+  }
+
+  // Validar nombre de asignatura
+  if (!data.nombreAsignatura || data.nombreAsignatura.trim() === '') {
+    errors.nombreAsignatura = 'El nombre de la asignatura es requerido'
+    isValid = false
+  }
+
+  // Validar código de asignatura
+  if (!data.codigoAsignatura || data.codigoAsignatura.trim() === '') {
+    errors.codigoAsignatura = 'El código de asignatura es requerido'
+    isValid = false
+  } else {
+    // Validar formato del código (ej: ISW-401)
+    const codigoRegex = /^[A-Z]{2,4}-\d{3}$/
+    if (!codigoRegex.test(data.codigoAsignatura)) {
+      errors.codigoAsignatura = 'Formato inválido. Use: LLL-NNN (ej: ISW-401)'
+      isValid = false
+    }
+  }
+
+  // Validar créditos
+  if (!data.creditos) {
+    errors.creditos = 'El número de créditos es requerido'
+    isValid = false
+  } else if (data.creditos < 1 || data.creditos > 10) {
+    errors.creditos = 'Los créditos deben estar entre 1 y 10'
+    isValid = false
+  }
+
+  // Validar horas presenciales
+  if (!data.horasPresenciales) {
+    errors.horasPresenciales = 'Las horas presenciales son requeridas'
+    isValid = false
+  } else if (data.horasPresenciales < 0) {
+    errors.horasPresenciales = 'Las horas presenciales no pueden ser negativas'
+    isValid = false
+  }
+
+  // Validar horas no presenciales
+  if (!data.horasNoPresenciales) {
+    errors.horasNoPresenciales = 'Las horas no presenciales son requeridas'
+    isValid = false
+  } else if (data.horasNoPresenciales < 0) {
+    errors.horasNoPresenciales = 'Las horas no presenciales no pueden ser negativas'
+    isValid = false
+  }
+
+  return { isValid, errors }
+}
+
 // Exportación por nombre ya realizada en las declaraciones individuales.

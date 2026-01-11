@@ -24,7 +24,13 @@ const router = createRouter({
           path: 'dashboard',
           name: 'professor-dashboard',
           component: () => import('@/views/professor/DashboardView.vue')
+        },
+        {
+          path: 'crear-silabo',  // Nueva ruta
+          name: 'crear-silabo',
+          component: () => import('@/components/silabos/SilaboForm.vue')
         }
+
       ]
     },
     {

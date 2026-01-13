@@ -15,7 +15,7 @@
           <p>Desarrollar un nuevo sílabo desde cero</p>
         </router-link>
 
-        <router-link to="#" class="action-card">
+        <router-link to="/professor/mis-silabos" class="action-card">
           <h3>Mis Sílabos</h3>
           <p>Ver y editar sílabos existentes</p>
         </router-link>

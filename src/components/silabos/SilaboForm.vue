@@ -1,9 +1,15 @@
 <template>
-  <!-- EL TEMPLATE SIGUE EXACTAMENTE IGUAL, NO CAMBIES NADA AQUÍ -->
   <div class="silabo-form-container">
     <div class="form-header">
-      <h1>Creación de Sílabo</h1>
-      <p class="subtitle">Complete los datos generales de la asignatura</p>
+      <!-- Mostrar título diferente si estamos editando -->
+      <h1>{{ esModoEdicion ? 'Editar Sílabo' : 'Creación de Sílabo' }}</h1>
+      <p class="subtitle">{{ esModoEdicion ? 'Modifique los datos generales del sílabo' : 'Complete los datos generales de la asignatura' }}</p>
+
+      <!-- Indicador visual si estamos editando -->
+      <div v-if="esModoEdicion" class="edit-mode-indicator">
+        <span class="edit-badge">✏️ Modo Edición</span>
+        <p class="edit-info">Editando: {{ nombreSilaboEdicion }}</p>
+      </div>
     </div>
 
     <div class="form-content">
@@ -12,14 +18,14 @@
 
     <div class="form-footer">
       <button @click="volverDashboard" class="btn btn-outline">
-        Volver al Dashboard
+        {{ esModoEdicion ? 'Cancelar' : 'Volver al Dashboard' }}
       </button>
       <div class="form-actions-right">
         <button @click="exportarJSON" class="btn btn-secondary">
           Exportar JSON
         </button>
         <button @click="siguienteFormulario" class="btn btn-primary">
-          Siguiente
+          {{ esModoEdicion ? 'Continuar Edición' : 'Siguiente' }}
         </button>
       </div>
     </div>
@@ -27,23 +33,81 @@
 </template>
 
 <script setup>
-// AGREGAR 'onMounted' en la importación de vue
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSilaboStore } from '@/stores/silabos'
 import SilaboGeneralData from '@/components/silabos/SilaboGeneralData.vue'
+import silaboStorage from '@/services/silaboStorage'
 
 const router = useRouter()
 const silaboStore = useSilaboStore()
 
-// AGREGAR ESTO: Cargar datos al montar el componente
+// Variables para modo edición
+const esModoEdicion = ref(false)
+const nombreSilaboEdicion = ref('')
+const silaboIdEdicion = ref(null)
+
+// Cargar datos al montar el componente
 onMounted(() => {
   // Cargar datos guardados previamente desde localStorage
   silaboStore.cargarDatosGenerales()
+
+  // Verificar si estamos en modo edición
+  verificarModoEdicion()
 })
 
+// Función para verificar si estamos editando
+const verificarModoEdicion = () => {
+  // Buscar ID del sílabo a editar
+  const silaboId = localStorage.getItem('silabo_editar_id')
+
+  if (silaboId) {
+    esModoEdicion.value = true
+    silaboIdEdicion.value = silaboId
+
+    // Cargar información del sílabo para mostrar
+    cargarInfoSilaboEdicion(silaboId)
+
+    console.log(`✏️ Modo edición activado para sílabo: ${silaboId}`)
+  } else {
+    esModoEdicion.value = false
+    console.log('📝 Modo creación activado')
+  }
+}
+
+// Cargar información del sílabo que se está editando
+const cargarInfoSilaboEdicion = (silaboId) => {
+  try {
+    const silabo = silaboStorage.obtenerSilaboPorId(silaboId)
+
+    if (silabo && silabo.datosGenerales) {
+      nombreSilaboEdicion.value = silabo.datosGenerales.nombreAsignatura || 'Sílabo sin nombre'
+
+      // Mostrar mensaje en consola
+      console.log(`📖 Editando sílabo: ${nombreSilaboEdicion.value}`)
+    } else {
+      nombreSilaboEdicion.value = 'Sílabo no encontrado'
+      console.warn('⚠️ Sílabo no encontrado para edición:', silaboId)
+    }
+  } catch (error) {
+    console.error('❌ Error al cargar información del sílabo:', error)
+    nombreSilaboEdicion.value = 'Error al cargar'
+  }
+}
+
 const volverDashboard = () => {
-  router.push('/professor/dashboard')
+  if (esModoEdicion.value) {
+    // Si estamos editando, preguntar si queremos cancelar
+    if (confirm('¿Cancelar la edición? Los cambios no guardados se perderán.')) {
+      // Limpiar el ID de edición
+      localStorage.removeItem('silabo_editar_id')
+      // Limpiar datos temporales
+      silaboStorage.eliminarDatosTemporales()
+      router.push('/professor/dashboard')
+    }
+  } else {
+    router.push('/professor/dashboard')
+  }
 }
 
 const exportarJSON = () => {
@@ -86,7 +150,12 @@ const siguienteFormulario = () => {
   // Guardar datos actuales antes de navegar
   silaboStore.guardarDatosGenerales()
 
-  // Navegar al nuevo formulario de estructura conceptual
+  // Si estamos en modo edición, mantener el ID
+  if (esModoEdicion.value && silaboIdEdicion.value) {
+    console.log(`➡️ Continuando edición del sílabo: ${silaboIdEdicion.value}`)
+  }
+
+  // Navegar al formulario de estructura conceptual
   router.push({
     name: 'estructura-conceptual'
   })
@@ -94,7 +163,7 @@ const siguienteFormulario = () => {
 </script>
 
 <style scoped>
-/* LOS ESTILOS SIGUEN EXACTAMENTE IGUAL, NO CAMBIES NADA AQUÍ */
+/* ESTILOS EXISTENTES (se mantienen igual) */
 .silabo-form-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -117,8 +186,38 @@ const siguienteFormulario = () => {
 .subtitle {
   font-size: 1.1rem;
   opacity: 0.9;
+  margin-bottom: 1rem;
 }
 
+/* NUEVOS ESTILOS PARA MODO EDICIÓN */
+.edit-mode-indicator {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  display: inline-block;
+}
+
+.edit-badge {
+  display: inline-block;
+  background: #ffc107;
+  color: #212529;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.edit-info {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ESTILOS EXISTENTES (se mantienen igual) */
 .form-content {
   max-width: 1200px;
   margin: 0 auto;
@@ -194,6 +293,10 @@ const siguienteFormulario = () => {
 
   .btn {
     padding: 0.75rem 1.5rem;
+  }
+
+  .form-header h1 {
+    font-size: 2rem;
   }
 }
 </style>

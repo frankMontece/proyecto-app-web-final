@@ -168,7 +168,7 @@ export function guardarSilaboCompleto(datosGenerales, estructuraConceptual, meta
       datosGenerales: { ...datosGenerales },
       estructuraConceptual: { ...estructuraConceptual },
       metadata: {
-        estado: 'pendiente_revision',
+        estado: 'completado',
         fechaCreacion: new Date().toISOString(),
         creadoPor: metadata.profesor || 'profesor_anonimo',
         ultimaModificacion: new Date().toISOString(),
@@ -201,6 +201,70 @@ export function guardarSilaboCompleto(datosGenerales, estructuraConceptual, meta
     return {
       success: false,
       message: 'Error al guardar sílabo completo',
+      error: error.message
+    }
+  }
+}
+
+/**
+ * Actualiza un sílabo existente manteniendo su ID (PARA EDICIÓN)
+ * @param {string} silaboId - ID del sílabo a actualizar
+ * @param {Object} datosGenerales - Nuevos datos generales
+ * @param {Object} estructuraConceptual - Nueva estructura conceptual
+ * @returns {Object} Resultado de la operación
+ */
+export function actualizarSilaboCompleto(silaboId, datosGenerales, estructuraConceptual) {
+  try {
+    // Validar datos
+    if (!datosGenerales || !estructuraConceptual) {
+      throw new Error('Datos incompletos para actualizar sílabo')
+    }
+
+    // Obtener lista de sílabos
+    const todosSilabos = obtenerTodosSilabos()
+    const indice = todosSilabos.findIndex(s => s.id === silaboId)
+
+    if (indice === -1) {
+      return {
+        success: false,
+        message: 'Sílabo no encontrado para actualizar'
+      }
+    }
+
+    // Crear sílabo actualizado
+    const silaboActualizado = {
+      id: silaboId, // Mantener el mismo ID
+      datosGenerales: { ...datosGenerales },
+      estructuraConceptual: { ...estructuraConceptual },
+      metadata: {
+        ...todosSilabos[indice].metadata,
+        estado: 'completado',
+        ultimaModificacion: new Date().toISOString()
+      }
+    }
+
+    // Reemplazar el sílabo antiguo
+    todosSilabos[indice] = silaboActualizado
+
+    // Guardar lista actualizada
+    localStorage.setItem(STORAGE_KEYS.SILABOS_COMPLETOS, JSON.stringify(todosSilabos))
+
+    // Limpiar datos temporales
+    eliminarDatosTemporales()
+
+    console.log('✏️ Sílabo actualizado exitosamente:', silaboId)
+
+    return {
+      success: true,
+      message: 'Sílabo actualizado exitosamente',
+      silaboId: silaboId,
+      timestamp: silaboActualizado.metadata.ultimaModificacion
+    }
+  } catch (error) {
+    console.error('❌ Error al actualizar sílabo completo:', error)
+    return {
+      success: false,
+      message: 'Error al actualizar sílabo',
       error: error.message
     }
   }
@@ -249,12 +313,13 @@ export function obtenerSilaboPorId(silaboId) {
 }
 
 /**
- * Actualiza un sílabo existente
+ * Actualiza un sílabo existente (versión mejorada)
  * @param {string} silaboId - ID del sílabo a actualizar
  * @param {Object} nuevosDatos - Nuevos datos para el sílabo
+ * @param {boolean} mantenerMetadata - Si se debe mantener la metadata existente
  * @returns {Object} Resultado de la operación
  */
-export function actualizarSilabo(silaboId, nuevosDatos) {
+export function actualizarSilabo(silaboId, nuevosDatos, mantenerMetadata = true) {
   try {
     const todosSilabos = obtenerTodosSilabos()
     const indice = todosSilabos.findIndex(s => s.id === silaboId)
@@ -267,11 +332,15 @@ export function actualizarSilabo(silaboId, nuevosDatos) {
     }
 
     // Actualizar sílabo
+    const silaboActual = todosSilabos[indice]
     todosSilabos[indice] = {
-      ...todosSilabos[indice],
+      ...silaboActual,
       ...nuevosDatos,
-      metadata: {
-        ...todosSilabos[indice].metadata,
+      metadata: mantenerMetadata ? {
+        ...silaboActual.metadata,
+        ultimaModificacion: new Date().toISOString()
+      } : {
+        ...(nuevosDatos.metadata || {}),
         ultimaModificacion: new Date().toISOString()
       }
     }
@@ -463,6 +532,7 @@ export default {
 
   // Sílabos completos
   guardarSilaboCompleto,
+  actualizarSilaboCompleto,  // ← NUEVA FUNCIÓN PARA EDICIÓN
   obtenerTodosSilabos,
   obtenerSilaboPorId,
   actualizarSilabo,

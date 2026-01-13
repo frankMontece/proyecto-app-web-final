@@ -2,8 +2,14 @@
   <div class="estructura-conceptual-container">
     <!-- Encabezado -->
     <div class="form-header">
-      <h1>Estructura conceptual y desarrollo metodológico de la asignatura</h1>
-      <p class="subtitle">Complete los datos de la estructura conceptual del sílabo</p>
+      <h1>{{ esModoEdicion ? 'Editar Estructura Conceptual' : 'Estructura conceptual y desarrollo metodológico de la asignatura' }}</h1>
+      <p class="subtitle">{{ esModoEdicion ? 'Modifique la estructura conceptual del sílabo' : 'Complete los datos de la estructura conceptual del sílabo' }}</p>
+
+      <!-- Indicador de modo edición -->
+      <div v-if="esModoEdicion" class="edit-mode-banner">
+        <span class="edit-icon">✏️</span>
+        <span class="edit-text">Editando: {{ nombreSilaboEdicion }}</span>
+      </div>
     </div>
 
     <!-- Contenido del formulario -->
@@ -272,14 +278,14 @@
       <!-- Botones de navegación -->
       <div class="form-footer">
         <button @click="retroceder" class="btn btn-outline">
-          Retroceder
+          {{ esModoEdicion ? 'Cancelar Edición' : 'Retroceder' }}
         </button>
         <div class="form-actions-right">
           <button @click="guardarBorrador" class="btn btn-secondary">
             Guardar Borrador
           </button>
           <button @click="guardarYFinalizar" class="btn btn-primary">
-            Guardar y Finalizar
+            {{ esModoEdicion ? 'Actualizar Sílabo' : 'Guardar y Finalizar' }}
           </button>
         </div>
       </div>
@@ -288,11 +294,16 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import silaboStorage from '@/services/silaboStorage'
 
 const router = useRouter()
+
+// Variables para modo edición
+const esModoEdicion = ref(false)
+const nombreSilaboEdicion = ref('')
+const silaboIdEdicion = ref(null)
 
 // Datos principales del formulario (Sección 1)
 const formData = reactive({
@@ -378,8 +389,19 @@ const calculatePracticalHours = () => {
 
 // Función para retroceder al formulario anterior
 const retroceder = () => {
-  guardarBorrador()
-  router.push('/professor/crear-silabo')
+  if (esModoEdicion.value) {
+    // Preguntar confirmación en modo edición
+    if (confirm('¿Cancelar la edición? Los cambios no guardados se perderán.')) {
+      // Limpiar datos de edición
+      localStorage.removeItem('silabo_editar_id')
+      silaboStorage.eliminarDatosTemporales()
+      router.push('/professor/dashboard')
+    }
+  } else {
+    // Guardar borrador y retroceder normalmente
+    guardarBorrador()
+    router.push('/professor/crear-silabo')
+  }
 }
 
 // Función para guardar borrador - ACTUALIZADA para usar el servicio
@@ -408,9 +430,10 @@ const guardarBorrador = () => {
   }
 }
 
-// Función para guardar y finalizar - ACTUALIZADA para usar el servicio
+// Función para guardar/actualizar el sílabo
 const guardarYFinalizar = () => {
   try {
+    // Obtener datos generales usando el servicio
     const datosGenerales = silaboStorage.obtenerDatosGenerales()
 
     if (!datosGenerales || Object.keys(datosGenerales).length === 0) {
@@ -418,26 +441,53 @@ const guardarYFinalizar = () => {
       return
     }
 
+    // Preparar datos de estructura conceptual
     const estructuraConceptual = {
       formData: { ...formData },
-      contactLearning: { ...contactLearning },
-      practicalLearning: { ...practicalLearning }
+      contactoDocente: { ...contactLearning },
+      aprendizajePractico: { ...practicalLearning }
     }
 
-    const resultado = silaboStorage.guardarSilaboCompleto(
-      datosGenerales,
-      estructuraConceptual,
-      {
-        profesor: 'profesor_actual',
-        estado: 'completado'
+    let resultado
+
+    // Determinar si es creación o edición
+    const silaboId = localStorage.getItem('silabo_editar_id')
+
+    if (silaboId) {
+      // MODO EDICIÓN: Actualizar sílabo existente
+      resultado = silaboStorage.actualizarSilaboCompleto(
+        silaboId,
+        datosGenerales,
+        estructuraConceptual
+      )
+
+      if (resultado.success) {
+        // Limpiar el ID de edición
+        localStorage.removeItem('silabo_editar_id')
       }
-    )
+    } else {
+      // MODO CREACIÓN: Guardar nuevo sílabo
+      resultado = silaboStorage.guardarSilaboCompleto(
+        datosGenerales,
+        estructuraConceptual,
+        {
+          profesor: 'profesor_actual',
+          estado: 'completado'
+        }
+      )
+    }
 
     if (resultado.success) {
-      alert(`✅ ¡Sílabo guardado exitosamente!\nID: ${resultado.silaboId}`)
+      const mensaje = silaboId
+        ? `✅ Sílabo actualizado exitosamente!\nID: ${resultado.silaboId}`
+        : `✅ ¡Sílabo guardado exitosamente!\nID: ${resultado.silaboId}`
+
+      alert(mensaje)
+
+      // Redirigir al dashboard
       router.push('/professor/dashboard')
     } else {
-      alert('❌ Error al guardar el sílabo: ' + resultado.message)
+      alert('❌ Error: ' + resultado.message)
     }
 
     return resultado
@@ -448,37 +498,66 @@ const guardarYFinalizar = () => {
   }
 }
 
-// Cargar datos al montar el componente - ACTUALIZADA para usar el servicio
+// Verificar modo edición y cargar datos
+const verificarModoEdicion = () => {
+  const silaboId = localStorage.getItem('silabo_editar_id')
+
+  if (silaboId) {
+    esModoEdicion.value = true
+    silaboIdEdicion.value = silaboId
+
+    // Cargar información del sílabo
+    const silabo = silaboStorage.obtenerSilaboPorId(silaboId)
+    if (silabo) {
+      nombreSilaboEdicion.value = silabo.datosGenerales?.nombreAsignatura || 'Sílabo sin nombre'
+    }
+
+    console.log(`✏️ Modo edición activado para sílabo: ${silaboId}`)
+  }
+}
+
+// Cargar datos al montar el componente - ACTUALIZADA
 onMounted(() => {
+  // Verificar si estamos en modo edición
+  verificarModoEdicion()
+
+  // Cargar borrador usando el servicio
   const borrador = silaboStorage.obtenerEstructuraConceptual()
 
   if (borrador) {
     try {
+      // Cargar datos principales
       if (borrador.formData) {
         Object.assign(formData, borrador.formData)
       }
 
+      // Cargar datos de contacto con docente
       if (borrador.contactLearning) {
         contactLearning.numContents = borrador.contactLearning.numContents || 0
         contactLearning.tableData = borrador.contactLearning.tableData || []
         contactLearning.totalHours = borrador.contactLearning.totalHours || 0
 
+        // Regenerar tabla si hay datos pero la tabla está vacía
         if (contactLearning.numContents > 0 && contactLearning.tableData.length === 0) {
           generateContactTable()
         }
       }
 
+      // Cargar datos de aprendizaje práctico
       if (borrador.practicalLearning) {
         practicalLearning.numActivities = borrador.practicalLearning.numActivities || 0
         practicalLearning.tableData = borrador.practicalLearning.tableData || []
         practicalLearning.totalHours = borrador.practicalLearning.totalHours || 0
 
+        // Regenerar tabla si hay datos pero la tabla está vacía
         if (practicalLearning.numActivities > 0 && practicalLearning.tableData.length === 0) {
           generatePracticalTable()
         }
       }
 
       console.log('✅ Borrador cargado exitosamente desde servicio')
+
+      // Recalcular totales por si acaso
       calculateContactHours()
       calculatePracticalHours()
     } catch (error) {
@@ -513,8 +592,31 @@ onMounted(() => {
 .subtitle {
   font-size: 1.1rem;
   opacity: 0.9;
+  margin-bottom: 1rem;
 }
 
+/* Banner de modo edición */
+.edit-mode-banner {
+  background: rgba(255, 193, 7, 0.2);
+  border: 2px solid rgba(255, 193, 7, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.edit-icon {
+  font-size: 1.2rem;
+}
+
+.edit-text {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Estilos existentes (se mantienen igual) */
 .form-content {
   max-width: 1400px;
   margin: 0 auto;
@@ -785,6 +887,10 @@ onMounted(() => {
   .table-input, .table-select {
     font-size: 0.8rem;
     padding: 0.4rem;
+  }
+
+  .form-header h1 {
+    font-size: 1.7rem;
   }
 }
 </style>

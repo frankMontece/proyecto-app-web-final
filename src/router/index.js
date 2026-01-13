@@ -35,6 +35,11 @@ const router = createRouter({
           name: 'estructura-conceptual',
           component: () => import('@/components/silabos/EstructuraConceptualForm.vue'),
           props: true  // Permite pasar parámetros como props
+        },
+        {
+          path: 'mis-silabos',  // ← NUEVA RUTA A AGREGAR
+          name: 'mis-silabos',
+          component: () => import('@/views/professor/MisSilabosView.vue')
         }
       ]
     },

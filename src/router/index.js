@@ -26,11 +26,16 @@ const router = createRouter({
           component: () => import('@/views/professor/DashboardView.vue')
         },
         {
-          path: 'crear-silabo',  // Nueva ruta
+          path: 'crear-silabo',  // Ruta existente
           name: 'crear-silabo',
           component: () => import('@/components/silabos/SilaboForm.vue')
+        },
+        {
+          path: 'estructura-conceptual/:id?',  // NUEVA RUTA AGREGADA
+          name: 'estructura-conceptual',
+          component: () => import('@/components/silabos/EstructuraConceptualForm.vue'),
+          props: true  // Permite pasar parámetros como props
         }
-
       ]
     },
     {
@@ -54,7 +59,7 @@ const router = createRouter({
   ]
 })
 
-// Guardia de navegación
+// Guardia de navegación (MANTENER IGUAL - NO CAMBIAR)
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 

@@ -1,4 +1,5 @@
 <template>
+  <!-- EL TEMPLATE SIGUE EXACTAMENTE IGUAL, NO CAMBIES NADA AQUÍ -->
   <div class="silabo-form-container">
     <div class="form-header">
       <h1>Creación de Sílabo</h1>
@@ -13,20 +14,33 @@
       <button @click="volverDashboard" class="btn btn-outline">
         Volver al Dashboard
       </button>
-      <button @click="exportarJSON" class="btn btn-success">
-        Exportar JSON
-      </button>
+      <div class="form-actions-right">
+        <button @click="exportarJSON" class="btn btn-secondary">
+          Exportar JSON
+        </button>
+        <button @click="siguienteFormulario" class="btn btn-primary">
+          Siguiente
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+// AGREGAR 'onMounted' en la importación de vue
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSilaboStore } from '@/stores/silabos'
 import SilaboGeneralData from '@/components/silabos/SilaboGeneralData.vue'
 
 const router = useRouter()
 const silaboStore = useSilaboStore()
+
+// AGREGAR ESTO: Cargar datos al montar el componente
+onMounted(() => {
+  // Cargar datos guardados previamente desde localStorage
+  silaboStore.cargarDatosGenerales()
+})
 
 const volverDashboard = () => {
   router.push('/professor/dashboard')
@@ -50,9 +64,37 @@ const exportarJSON = () => {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
+
+const siguienteFormulario = () => {
+  // Verificar que haya datos en el store antes de continuar
+  const data = silaboStore.generalData
+
+  if (!data || Object.keys(data).length === 0) {
+    alert('Por favor, complete los datos generales del sílabo antes de continuar.')
+    return
+  }
+
+  // Verificar campos requeridos básicos
+  const camposRequeridos = ['nombreAsignatura', 'codigoAsignatura']
+  const faltantes = camposRequeridos.filter(campo => !data[campo])
+
+  if (faltantes.length > 0) {
+    alert(`Por favor complete los siguientes campos requeridos: ${faltantes.join(', ')}`)
+    return
+  }
+
+  // Guardar datos actuales antes de navegar
+  silaboStore.guardarDatosGenerales()
+
+  // Navegar al nuevo formulario de estructura conceptual
+  router.push({
+    name: 'estructura-conceptual'
+  })
+}
 </script>
 
 <style scoped>
+/* LOS ESTILOS SIGUEN EXACTAMENTE IGUAL, NO CAMBIES NADA AQUÍ */
 .silabo-form-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -87,10 +129,16 @@ const exportarJSON = () => {
   margin: 2rem auto 0;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 1.5rem;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-actions-right {
+  display: flex;
+  gap: 1rem;
 }
 
 .btn {
@@ -114,12 +162,38 @@ const exportarJSON = () => {
   color: white;
 }
 
-.btn-success {
-  background-color: #28a745;
+.btn-secondary {
+  background-color: #6c757d;
   color: white;
 }
 
-.btn-success:hover {
-  background-color: #218838;
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-footer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-actions-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+  }
 }
 </style>

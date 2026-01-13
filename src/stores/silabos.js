@@ -31,6 +31,35 @@ export const useSilaboStore = defineStore('silabo', () => {
     Object.assign(generalData, data)
   }
 
+  // NUEVO MÉTODO: Guardar datos generales en localStorage
+  const guardarDatosGenerales = () => {
+    try {
+      localStorage.setItem('silabo_general', JSON.stringify(generalData))
+      console.log('Datos generales guardados:', generalData)
+      return { success: true, message: 'Datos guardados exitosamente' }
+    } catch (error) {
+      console.error('Error al guardar datos:', error)
+      return { success: false, message: 'Error al guardar datos' }
+    }
+  }
+
+  // NUEVO MÉTODO: Cargar datos generales desde localStorage
+  const cargarDatosGenerales = () => {
+    try {
+      const stored = localStorage.getItem('silabo_general')
+      if (stored) {
+        const datos = JSON.parse(stored)
+        Object.assign(generalData, datos)
+        console.log('Datos generales cargados:', datos)
+        return { success: true, message: 'Datos cargados exitosamente' }
+      }
+      return { success: false, message: 'No hay datos guardados' }
+    } catch (error) {
+      console.error('Error al cargar datos:', error)
+      return { success: false, message: 'Error al cargar datos' }
+    }
+  }
+
   const addSilabo = (silabo) => {
     silabos.value.push({
       ...silabo,
@@ -69,6 +98,8 @@ export const useSilaboStore = defineStore('silabo', () => {
 
     // Actions
     setGeneralData,
+    guardarDatosGenerales,  // NUEVO
+    cargarDatosGenerales,   // NUEVO
     addSilabo,
     loadSilabosFromStorage,
     clearGeneralData

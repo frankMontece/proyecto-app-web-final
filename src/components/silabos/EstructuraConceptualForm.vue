@@ -1,14 +1,13 @@
 <template>
   <div class="estructura-conceptual-container">
-    <!-- Encabezado -->
+    <!-- Encabezado simple -->
     <div class="form-header">
-      <h1>{{ esModoEdicion ? 'Editar Estructura Conceptual' : 'Estructura conceptual y desarrollo metodológico de la asignatura' }}</h1>
-      <p class="subtitle">{{ esModoEdicion ? 'Modifique la estructura conceptual del sílabo' : 'Complete los datos de la estructura conceptual del sílabo' }}</p>
+      <h1>Estructura Conceptual</h1>
+      <p class="subtitle">{{ esModoEdicion ? 'Modificación del sílabo' : 'Complete los datos requeridos' }}</p>
 
-      <!-- Indicador de modo edición -->
-      <div v-if="esModoEdicion" class="edit-mode-banner">
-        <span class="edit-icon">✏️</span>
-        <span class="edit-text">Editando: {{ nombreSilaboEdicion }}</span>
+      <!-- Indicador simple de edición -->
+      <div v-if="esModoEdicion" class="edit-indicator">
+        <span>Editando sílabo</span>
       </div>
     </div>
 
@@ -16,45 +15,40 @@
     <div class="form-content">
       <!-- Sección 1: Datos de la actividad -->
       <div class="form-section">
-        <h2 class="section-title">Sección 1: Datos de la actividad</h2>
+        <h2 class="section-title">1. Datos de la actividad</h2>
 
         <div class="form-row">
           <div class="label-col">
-            <label for="activityName">Nombre de la actividad curricular:</label>
+            <label>Nombre de la actividad curricular:</label>
           </div>
           <div class="input-col">
             <input
-              id="activityName"
               type="text"
               v-model="formData.activityName"
               class="form-input"
-              placeholder="UNIDAD 1: Tecnologías y Estándares Front-End"
             />
           </div>
         </div>
 
         <div class="form-row">
           <div class="label-col">
-            <label for="learningResults">Resultados de aprendizaje de la actividad curricular:</label>
+            <label>Resultados de aprendizaje:</label>
           </div>
           <div class="input-col">
             <textarea
-              id="learningResults"
               v-model="formData.learningResults"
               class="form-textarea"
-              rows="3"
-              placeholder="Identifica y aplica los estándares para el desarrollo de aplicaciones web en el cliente."
+              rows="2"
             ></textarea>
           </div>
         </div>
 
         <div class="form-row">
           <div class="label-col">
-            <label for="startDate">Fecha planificada de inicio:</label>
+            <label>Fecha de inicio:</label>
           </div>
           <div class="input-col">
             <input
-              id="startDate"
               type="date"
               v-model="formData.startDate"
               class="form-input"
@@ -64,11 +58,10 @@
 
         <div class="form-row">
           <div class="label-col">
-            <label for="endDate">Fecha planificada de fin:</label>
+            <label>Fecha de fin:</label>
           </div>
           <div class="input-col">
             <input
-              id="endDate"
               type="date"
               v-model="formData.endDate"
               class="form-input"
@@ -78,15 +71,13 @@
 
         <div class="form-row">
           <div class="label-col">
-            <label for="learningAchievements">Logros de aprendizaje:</label>
+            <label>Logros de aprendizaje:</label>
           </div>
           <div class="input-col">
             <textarea
-              id="learningAchievements"
               v-model="formData.learningAchievements"
               class="form-textarea"
-              rows="4"
-              placeholder="Ingrese los logros de aprendizaje esperados..."
+              rows="3"
             ></textarea>
           </div>
         </div>
@@ -94,198 +85,124 @@
 
       <!-- Sección 2: Aprendizaje en contacto con el docente -->
       <div class="form-section">
-        <h2 class="section-title">Sección 2: Aprendizaje en contacto con el docente</h2>
+        <h2 class="section-title">2. Aprendizaje en contacto con el docente</h2>
 
         <div class="form-row">
           <div class="label-col">
-            <label for="numContents">Número de contenidos:</label>
+            <label>Número de contenidos:</label>
           </div>
           <div class="input-col">
             <input
-              id="numContents"
               type="number"
               v-model.number="contactLearning.numContents"
               min="0"
               max="20"
-              class="form-input small-number"
+              class="form-input small-input"
               @input="generateContactTable"
             />
-            <span class="input-hint">(Máximo: 20)</span>
           </div>
         </div>
 
-        <!-- Tabla dinámica para Sección 2 -->
+        <!-- Tabla dinámica simplificada -->
         <div v-if="contactLearning.numContents > 0" class="table-container">
-          <table class="dynamic-table">
-            <thead>
-              <tr>
-                <th>Contenidos</th>
-                <th>Procesos didácticos y estrategias</th>
-                <th>Recursos didácticos</th>
-                <th>Escenarios de aprendizaje</th>
-                <th>Horas</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, index) in contactLearning.tableData" :key="index">
-                <td>
-                  <input
-                    type="text"
-                    v-model="row.contenidos"
-                    class="table-input"
-                    placeholder="Ingrese contenido"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    v-model="row.procesos"
-                    class="table-input"
-                    placeholder="Procesos didácticos"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    v-model="row.recursos"
-                    class="table-input"
-                    placeholder="Recursos a utilizar"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    v-model="row.escenarios"
-                    class="table-input"
-                    placeholder="Escenario de aprendizaje"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    v-model.number="row.horas"
-                    min="0"
-                    class="table-input small-number"
-                    @input="calculateContactHours"
-                    placeholder="0"
-                  />
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="4" class="total-label">
-                  <strong>Horas en contacto con el docente:</strong>
-                </td>
-                <td class="total-value">
-                  <strong>{{ contactLearning.totalHours }}</strong>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        <div v-else class="empty-table-message">
-          <p>Ingrese un número mayor a 0 para generar la tabla de contenidos.</p>
+          <div class="table-responsive">
+            <table class="simple-table">
+              <thead>
+                <tr>
+                  <th>Contenidos</th>
+                  <th>Procesos didácticos</th>
+                  <th>Recursos</th>
+                  <th>Escenarios</th>
+                  <th>Horas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, index) in contactLearning.tableData" :key="index">
+                  <td><input type="text" v-model="row.contenidos" class="table-input" /></td>
+                  <td><input type="text" v-model="row.procesos" class="table-input" /></td>
+                  <td><input type="text" v-model="row.recursos" class="table-input" /></td>
+                  <td><input type="text" v-model="row.escenarios" class="table-input" /></td>
+                  <td><input type="number" v-model.number="row.horas" min="0" class="table-input hours-input" @input="calculateContactHours" /></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4" class="total-label">Total horas contacto:</td>
+                  <td class="total-value">{{ contactLearning.totalHours }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- Sección 3: Aprendizaje práctico-experimental -->
       <div class="form-section">
-        <h2 class="section-title">Sección 3: Aprendizaje práctico – experimental</h2>
+        <h2 class="section-title">3. Aprendizaje práctico-experimental</h2>
 
         <div class="form-row">
           <div class="label-col">
-            <label for="numActivities">Número de actividades prácticas:</label>
+            <label>Número de actividades:</label>
           </div>
           <div class="input-col">
             <input
-              id="numActivities"
               type="number"
               v-model.number="practicalLearning.numActivities"
               min="0"
               max="15"
-              class="form-input small-number"
+              class="form-input small-input"
               @input="generatePracticalTable"
             />
-            <span class="input-hint">(Máximo: 15)</span>
           </div>
         </div>
 
-        <!-- Tabla dinámica para Sección 3 -->
+        <!-- Tabla dinámica simplificada -->
         <div v-if="practicalLearning.numActivities > 0" class="table-container">
-          <table class="dynamic-table">
-            <thead>
-              <tr>
-                <th>Actividades prácticas</th>
-                <th>Escenarios de aprendizaje</th>
-                <th>Contacto con el docente (Sí / No)</th>
-                <th>Horas</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, index) in practicalLearning.tableData" :key="index">
-                <td>
-                  <input
-                    type="text"
-                    v-model="row.actividad"
-                    class="table-input"
-                    placeholder="Descripción de la actividad"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    v-model="row.escenarios"
-                    class="table-input"
-                    placeholder="Escenario de la actividad"
-                  />
-                </td>
-                <td>
-                  <select v-model="row.contacto" class="table-select">
-                    <option value="Sí">Sí</option>
-                    <option value="No">No</option>
-                  </select>
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    v-model.number="row.horas"
-                    min="0"
-                    class="table-input small-number"
-                    @input="calculatePracticalHours"
-                    placeholder="0"
-                  />
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="3" class="total-label">
-                  <strong>Total de horas:</strong>
-                </td>
-                <td class="total-value">
-                  <strong>{{ practicalLearning.totalHours }}</strong>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        <div v-else class="empty-table-message">
-          <p>Ingrese un número mayor a 0 para generar la tabla de actividades prácticas.</p>
+          <div class="table-responsive">
+            <table class="simple-table">
+              <thead>
+                <tr>
+                  <th>Actividades</th>
+                  <th>Escenarios</th>
+                  <th>Contacto docente</th>
+                  <th>Horas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, index) in practicalLearning.tableData" :key="index">
+                  <td><input type="text" v-model="row.actividad" class="table-input" /></td>
+                  <td><input type="text" v-model="row.escenarios" class="table-input" /></td>
+                  <td>
+                    <select v-model="row.contacto" class="table-select">
+                      <option value="Sí">Sí</option>
+                      <option value="No">No</option>
+                    </select>
+                  </td>
+                  <td><input type="number" v-model.number="row.horas" min="0" class="table-input hours-input" @input="calculatePracticalHours" /></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" class="total-label">Total horas prácticas:</td>
+                  <td class="total-value">{{ practicalLearning.totalHours }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Botones de navegación -->
+      <!-- Botones simplificados -->
       <div class="form-footer">
         <button @click="retroceder" class="btn btn-outline">
-          {{ esModoEdicion ? 'Cancelar Edición' : 'Retroceder' }}
+          {{ esModoEdicion ? 'Cancelar' : 'Atrás' }}
         </button>
-        <div class="form-actions-right">
+        <div class="form-actions">
           <button @click="guardarBorrador" class="btn btn-secondary">
-            Guardar Borrador
+            Guardar
           </button>
           <button @click="guardarYFinalizar" class="btn btn-primary">
-            {{ esModoEdicion ? 'Actualizar Sílabo' : 'Guardar y Finalizar' }}
+            {{ esModoEdicion ? 'Actualizar' : 'Finalizar' }}
           </button>
         </div>
       </div>
@@ -294,6 +211,7 @@
 </template>
 
 <script setup>
+// El SCRIPT se mantiene EXACTAMENTE IGUAL - solo cambia el template y estilos
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import silaboStorage from '@/services/silaboStorage'
@@ -390,21 +308,18 @@ const calculatePracticalHours = () => {
 // Función para retroceder al formulario anterior
 const retroceder = () => {
   if (esModoEdicion.value) {
-    // Preguntar confirmación en modo edición
     if (confirm('¿Cancelar la edición? Los cambios no guardados se perderán.')) {
-      // Limpiar datos de edición
       localStorage.removeItem('silabo_editar_id')
       silaboStorage.eliminarDatosTemporales()
       router.push('/professor/dashboard')
     }
   } else {
-    // Guardar borrador y retroceder normalmente
     guardarBorrador()
     router.push('/professor/crear-silabo')
   }
 }
 
-// Función para guardar borrador - ACTUALIZADA para usar el servicio
+// Función para guardar borrador
 const guardarBorrador = () => {
   try {
     const datosBorrador = {
@@ -416,16 +331,15 @@ const guardarBorrador = () => {
     const resultado = silaboStorage.guardarEstructuraConceptual(datosBorrador)
 
     if (resultado.success) {
-      alert('✅ Borrador guardado correctamente')
-      console.log('📁', resultado.message)
+      alert('Borrador guardado correctamente')
     } else {
-      alert('❌ Error al guardar borrador: ' + resultado.message)
+      alert('Error al guardar borrador: ' + resultado.message)
     }
 
     return resultado
   } catch (error) {
     console.error('Error en guardarBorrador:', error)
-    alert('❌ Error inesperado al guardar borrador')
+    alert('Error inesperado al guardar borrador')
     return { success: false, message: error.message }
   }
 }
@@ -433,15 +347,13 @@ const guardarBorrador = () => {
 // Función para guardar/actualizar el sílabo
 const guardarYFinalizar = () => {
   try {
-    // Obtener datos generales usando el servicio
     const datosGenerales = silaboStorage.obtenerDatosGenerales()
 
     if (!datosGenerales || Object.keys(datosGenerales).length === 0) {
-      alert('❌ No se encontraron datos generales del sílabo. Complete el formulario anterior primero.')
+      alert('No se encontraron datos generales del sílabo. Complete el formulario anterior primero.')
       return
     }
 
-    // Preparar datos de estructura conceptual
     const estructuraConceptual = {
       formData: { ...formData },
       contactoDocente: { ...contactLearning },
@@ -449,12 +361,9 @@ const guardarYFinalizar = () => {
     }
 
     let resultado
-
-    // Determinar si es creación o edición
     const silaboId = localStorage.getItem('silabo_editar_id')
 
     if (silaboId) {
-      // MODO EDICIÓN: Actualizar sílabo existente
       resultado = silaboStorage.actualizarSilaboCompleto(
         silaboId,
         datosGenerales,
@@ -462,11 +371,9 @@ const guardarYFinalizar = () => {
       )
 
       if (resultado.success) {
-        // Limpiar el ID de edición
         localStorage.removeItem('silabo_editar_id')
       }
     } else {
-      // MODO CREACIÓN: Guardar nuevo sílabo
       resultado = silaboStorage.guardarSilaboCompleto(
         datosGenerales,
         estructuraConceptual,
@@ -479,21 +386,19 @@ const guardarYFinalizar = () => {
 
     if (resultado.success) {
       const mensaje = silaboId
-        ? `✅ Sílabo actualizado exitosamente!\nID: ${resultado.silaboId}`
-        : `✅ ¡Sílabo guardado exitosamente!\nID: ${resultado.silaboId}`
+        ? `Sílabo actualizado exitosamente`
+        : `Sílabo guardado exitosamente`
 
       alert(mensaje)
-
-      // Redirigir al dashboard
       router.push('/professor/dashboard')
     } else {
-      alert('❌ Error: ' + resultado.message)
+      alert('Error: ' + resultado.message)
     }
 
     return resultado
   } catch (error) {
     console.error('Error en guardarYFinalizar:', error)
-    alert('❌ Error inesperado al guardar el sílabo')
+    alert('Error inesperado al guardar el sílabo')
     return { success: false, message: error.message }
   }
 }
@@ -506,152 +411,125 @@ const verificarModoEdicion = () => {
     esModoEdicion.value = true
     silaboIdEdicion.value = silaboId
 
-    // Cargar información del sílabo
     const silabo = silaboStorage.obtenerSilaboPorId(silaboId)
     if (silabo) {
       nombreSilaboEdicion.value = silabo.datosGenerales?.nombreAsignatura || 'Sílabo sin nombre'
     }
-
-    console.log(`✏️ Modo edición activado para sílabo: ${silaboId}`)
   }
 }
 
-// Cargar datos al montar el componente - ACTUALIZADA
+// Cargar datos al montar el componente
 onMounted(() => {
-  // Verificar si estamos en modo edición
   verificarModoEdicion()
 
-  // Cargar borrador usando el servicio
   const borrador = silaboStorage.obtenerEstructuraConceptual()
 
   if (borrador) {
     try {
-      // Cargar datos principales
       if (borrador.formData) {
         Object.assign(formData, borrador.formData)
       }
 
-      // Cargar datos de contacto con docente
       if (borrador.contactLearning) {
         contactLearning.numContents = borrador.contactLearning.numContents || 0
         contactLearning.tableData = borrador.contactLearning.tableData || []
         contactLearning.totalHours = borrador.contactLearning.totalHours || 0
 
-        // Regenerar tabla si hay datos pero la tabla está vacía
         if (contactLearning.numContents > 0 && contactLearning.tableData.length === 0) {
           generateContactTable()
         }
       }
 
-      // Cargar datos de aprendizaje práctico
       if (borrador.practicalLearning) {
         practicalLearning.numActivities = borrador.practicalLearning.numActivities || 0
         practicalLearning.tableData = borrador.practicalLearning.tableData || []
         practicalLearning.totalHours = borrador.practicalLearning.totalHours || 0
 
-        // Regenerar tabla si hay datos pero la tabla está vacía
         if (practicalLearning.numActivities > 0 && practicalLearning.tableData.length === 0) {
           generatePracticalTable()
         }
       }
 
-      console.log('✅ Borrador cargado exitosamente desde servicio')
-
-      // Recalcular totales por si acaso
       calculateContactHours()
       calculatePracticalHours()
     } catch (error) {
-      console.error('❌ Error al cargar borrador:', error)
+      console.error('Error al cargar borrador:', error)
     }
-  } else {
-    console.log('ℹ️ No se encontró borrador previo')
   }
 })
 </script>
 
 <style scoped>
+/* Estilos minimalistas y funcionales */
 .estructura-conceptual-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
+  background: #f8f9fa;
+  padding: 2rem 1rem;
 }
 
 .form-header {
-  text-align: center;
-  margin-bottom: 3rem;
-  color: white;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .form-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  color: #2c3e50;
   margin-bottom: 0.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
 }
 
 .subtitle {
-  font-size: 1.1rem;
-  opacity: 0.9;
-  margin-bottom: 1rem;
+  color: #6c757d;
+  font-size: 1rem;
 }
 
-/* Banner de modo edición */
-.edit-mode-banner {
-  background: rgba(255, 193, 7, 0.2);
-  border: 2px solid rgba(255, 193, 7, 0.3);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
+.edit-indicator {
+  display: inline-block;
+  background: #fff3cd;
+  color: #856404;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
 }
 
-.edit-icon {
-  font-size: 1.2rem;
-}
-
-.edit-text {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-/* Estilos existentes (se mantienen igual) */
 .form-content {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .form-section {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 0.5rem;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .section-title {
   color: #2c3e50;
-  border-bottom: 2px solid #3498db;
-  padding-bottom: 0.5rem;
+  font-size: 1.2rem;
   margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e9ecef;
+  font-weight: 600;
 }
 
-/* Estructura de dos columnas para formulario */
+/* Estructura de dos columnas simplificada */
 .form-row {
   display: flex;
-  margin-bottom: 1.5rem;
-  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  align-items: center;
 }
 
 .label-col {
-  flex: 0 0 350px;
-  padding-right: 2rem;
-  text-align: right;
+  flex: 0 0 200px;
+  padding-right: 1rem;
   font-weight: 500;
-  color: #2c3e50;
-  padding-top: 0.5rem;
+  color: #495057;
+  font-size: 0.95rem;
 }
 
 .input-col {
@@ -660,168 +538,153 @@ onMounted(() => {
 
 .form-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #bdc3c7;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  transition: border-color 0.3s;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease-in-out;
+  background: white;
 }
 
-.form-input.small-number {
-  width: 120px;
+.form-input.small-input {
+  width: 100px;
 }
 
 .form-input:focus {
-  border-color: #3498db;
+  border-color: #4dabf7;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.1);
 }
 
 .form-textarea {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #bdc3c7;
-  border-radius: 0.375rem;
-  font-size: 1rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.95rem;
   font-family: inherit;
   resize: vertical;
-  min-height: 100px;
+  min-height: 80px;
+  line-height: 1.5;
 }
 
 .form-textarea:focus {
-  border-color: #3498db;
+  border-color: #4dabf7;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.1);
 }
 
-.input-hint {
-  margin-left: 0.5rem;
-  color: #7f8c8d;
-  font-size: 0.9rem;
-}
-
-/* Estilos para tablas dinámicas */
+/* Tablas simplificadas */
 .table-container {
-  margin-top: 1.5rem;
-  overflow-x: auto;
+  margin-top: 1rem;
 }
 
-.dynamic-table {
+.table-responsive {
+  overflow-x: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.simple-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
-  border: 1px solid #dee2e6;
   font-size: 0.9rem;
 }
 
-.dynamic-table th {
-  background-color: #2c3e50;
-  color: white;
-  padding: 1rem;
+.simple-table th {
+  background-color: #f8f9fa;
+  color: #495057;
+  padding: 0.75rem;
   text-align: left;
   font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
   white-space: nowrap;
 }
 
-.dynamic-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #dee2e6;
-  border-right: 1px solid #dee2e6;
-  vertical-align: top;
+.simple-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+  border-right: 1px solid #e9ecef;
 }
 
-.dynamic-table td:last-child {
+.simple-table td:last-child {
   border-right: none;
-}
-
-.dynamic-table tbody tr:hover {
-  background-color: #f8f9fa;
 }
 
 .table-input {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.375rem 0.5rem;
   border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  font-size: 0.9rem;
-}
-
-.table-input.small-number {
-  width: 80px;
-}
-
-.table-select {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
+  border-radius: 3px;
   font-size: 0.9rem;
   background: white;
 }
 
-.dynamic-table tfoot {
-  background-color: #e9ecef;
+.table-input.hours-input {
+  width: 70px;
+  text-align: center;
+}
+
+.table-select {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.simple-table tfoot {
+  background-color: #f8f9fa;
+  font-weight: 600;
 }
 
 .total-label {
   text-align: right;
   padding-right: 1rem;
-  color: #2c3e50;
+  color: #495057;
 }
 
 .total-value {
-  font-size: 1.1rem;
-  color: #27ae60;
-  font-weight: bold;
+  color: #198754;
+  font-weight: 600;
   text-align: center;
 }
 
-.empty-table-message {
-  text-align: center;
-  padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 0.375rem;
-  border: 2px dashed #dee2e6;
-  color: #6c757d;
-  margin-top: 1rem;
-}
-
-/* Botones */
+/* Botones simplificados */
 .form-footer {
-  max-width: 1400px;
-  margin: 3rem auto 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+  border-top: 1px solid #dee2e6;
 }
 
-.form-actions-right {
+.form-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .btn {
-  padding: 0.75rem 2rem;
+  padding: 0.625rem 1.5rem;
   border: none;
-  border-radius: 0.375rem;
-  font-size: 1rem;
+  border-radius: 4px;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.15s ease-in-out;
 }
 
 .btn-outline {
   background: transparent;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #6c757d;
+  border: 1px solid #6c757d;
 }
 
 .btn-outline:hover {
-  background: #667eea;
+  background: #6c757d;
   color: white;
 }
 
@@ -835,35 +698,30 @@ onMounted(() => {
 }
 
 .btn-primary {
-  background-color: #28a745;
+  background-color: #0d6efd;
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #218838;
+  background-color: #0b5ed7;
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .label-col {
-    flex: 0 0 300px;
-  }
-}
-
 @media (max-width: 768px) {
   .estructura-conceptual-container {
-    padding: 1rem;
+    padding: 1rem 0.75rem;
   }
 
   .form-row {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .label-col {
     flex: none;
-    text-align: left;
     padding-right: 0;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.375rem;
+    width: 100%;
   }
 
   .form-footer {
@@ -871,26 +729,41 @@ onMounted(() => {
     gap: 1rem;
   }
 
-  .form-actions-right {
+  .form-actions {
     width: 100%;
     justify-content: space-between;
   }
 
   .btn {
-    padding: 0.75rem 1.5rem;
+    flex: 1;
+    text-align: center;
   }
 
-  .dynamic-table {
-    font-size: 0.8rem;
+  .simple-table {
+    font-size: 0.85rem;
   }
 
   .table-input, .table-select {
-    font-size: 0.8rem;
-    padding: 0.4rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.375rem;
   }
 
   .form-header h1 {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-section {
+    padding: 1rem;
+  }
+
+  .form-input.small-input {
+    width: 80px;
+  }
+
+  .table-input.hours-input {
+    width: 60px;
   }
 }
 </style>

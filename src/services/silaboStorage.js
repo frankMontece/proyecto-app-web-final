@@ -16,7 +16,10 @@ const STORAGE_KEYS = {
   SILABOS_REVISION: 'silabos_revision',
 
   // Observaciones de decanato
-  OBSERVACIONES: 'observaciones_silabos'
+  OBSERVACIONES: 'observaciones_silabos',
+
+  // Clave adicional para compatibilidad
+  OBSERVACIONES_PROFESOR: 'observaciones_profesor'
 }
 
 // ==============================================
@@ -168,9 +171,10 @@ export function guardarSilaboCompleto(datosGenerales, estructuraConceptual, meta
       datosGenerales: { ...datosGenerales },
       estructuraConceptual: { ...estructuraConceptual },
       metadata: {
-        estado: 'completado',
+        estado: metadata.estado || 'pendiente', // Cambiado a 'pendiente' por defecto para revisión
         fechaCreacion: new Date().toISOString(),
         creadoPor: metadata.profesor || 'profesor_anonimo',
+        profesorId: metadata.profesorId || obtenerProfesorActual() || 'unknown',
         ultimaModificacion: new Date().toISOString(),
         ...metadata
       }
@@ -238,7 +242,7 @@ export function actualizarSilaboCompleto(silaboId, datosGenerales, estructuraCon
       estructuraConceptual: { ...estructuraConceptual },
       metadata: {
         ...todosSilabos[indice].metadata,
-        estado: 'completado',
+        estado: 'pendiente', // Al editar, vuelve a estado pendiente para revisión
         ultimaModificacion: new Date().toISOString()
       }
     }
@@ -402,6 +406,352 @@ export function eliminarSilabo(silaboId) {
 }
 
 // ==============================================
+// FUNCIONES PARA DECANATO
+// ==============================================
+
+/**
+ * Obtiene sílabos por estado (para decanato)
+ * @param {string} estado - Estado del sílabo
+ * @returns {Array} Sílabos filtrados
+ */
+export function obtenerSilabosPorEstado(estado) {
+  const todosSilabos = obtenerTodosSilabos()
+  return todosSilabos.filter(silabo =>
+    silabo.metadata?.estado === estado
+  )
+}
+
+/**
+ * Cambia el estado de un sílabo
+ * @param {string} silaboId - ID del sílabo
+ * @param {string} nuevoEstado - Nuevo estado
+ * @param {Object} metadataAdicional - Metadata adicional
+ * @returns {Object} Resultado de la operación
+ */
+export function cambiarEstadoSilabo(silaboId, nuevoEstado, metadataAdicional = {}) {
+  try {
+    const todosSilabos = obtenerTodosSilabos()
+    const indice = todosSilabos.findIndex(s => s.id === silaboId)
+
+    if (indice === -1) {
+      return {
+        success: false,
+        message: 'Sílabo no encontrado'
+      }
+    }
+
+    // Actualizar estado y metadata
+    todosSilabos[indice].metadata = {
+      ...todosSilabos[indice].metadata,
+      estado: nuevoEstado,
+      fechaRevision: nuevoEstado === 'aprobado' || nuevoEstado === 'observado'
+        ? new Date().toISOString()
+        : todosSilabos[indice].metadata.fechaRevision,
+      revisadoPor: metadataAdicional.revisadoPor || 'decanato',
+      ...metadataAdicional
+    }
+
+    // Guardar cambios
+    localStorage.setItem(STORAGE_KEYS.SILABOS_COMPLETOS, JSON.stringify(todosSilabos))
+
+    console.log(`📝 Estado cambiado: ${silaboId} -> ${nuevoEstado}`)
+
+    return {
+      success: true,
+      message: `Sílabo ${nuevoEstado} exitosamente`
+    }
+  } catch (error) {
+    console.error('❌ Error al cambiar estado:', error)
+    return {
+      success: false,
+      message: 'Error al cambiar estado',
+      error: error.message
+    }
+  }
+}
+
+// ==============================================
+// FUNCIONES PARA OBSERVACIONES
+// ==============================================
+
+/**
+ * Agrega una observación a un sílabo
+ * @param {string} silaboId - ID del sílabo
+ * @param {string} observacion - Texto de la observación
+ * @param {Object} metadata - Metadatos adicionales
+ * @returns {Object} Resultado de la operación
+ */
+export function agregarObservacion(silaboId, observacion, metadata = {}) {
+  try {
+    // Obtener observaciones existentes
+    const observacionesExistentes = obtenerTodasObservaciones()
+
+    // Crear nueva observación
+    const nuevaObservacion = {
+      id: `obs_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      silaboId: silaboId,
+      observacion: observacion,
+      fecha: new Date().toISOString(),
+      creadoPor: metadata.creadoPor || 'decanato',
+      leida: false, // Compatibilidad con código original
+      visto: false, // Nuevo campo
+      ...metadata
+    }
+
+    // Agregar a la lista principal
+    observacionesExistentes.push(nuevaObservacion)
+
+    // Guardar observaciones principales
+    localStorage.setItem(STORAGE_KEYS.OBSERVACIONES, JSON.stringify(observacionesExistentes))
+
+    // Guardar también para profesor (compatibilidad)
+    guardarObservacionParaProfesor(nuevaObservacion)
+
+    // Cambiar estado del sílabo a "observado"
+    const resultadoEstado = cambiarEstadoSilabo(silaboId, 'observado', {
+      ultimaObservacion: nuevaObservacion.fecha,
+      ...metadata
+    })
+
+    console.log('📝 Observación agregada:', nuevaObservacion)
+
+    return {
+      success: true,
+      message: 'Observación agregada exitosamente',
+      observacionId: nuevaObservacion.id,
+      ...resultadoEstado
+    }
+  } catch (error) {
+    console.error('❌ Error al agregar observación:', error)
+    return {
+      success: false,
+      message: 'Error al agregar observación',
+      error: error.message
+    }
+  }
+}
+
+/**
+ * Guarda una observación (alias de agregarObservacion para compatibilidad)
+ * @param {Object} observacion - Datos de la observación
+ * @returns {Object} Resultado de la operación
+ */
+export function guardarObservacion(observacion) {
+  // Para mantener compatibilidad con el código proporcionado
+  return agregarObservacion(
+    observacion.silaboId,
+    observacion.observacion,
+    observacion
+  )
+}
+
+/**
+ * Obtiene todas las observaciones
+ * @returns {Array} Lista de observaciones
+ */
+export function obtenerTodasObservaciones() {
+  try {
+    const observaciones = localStorage.getItem(STORAGE_KEYS.OBSERVACIONES)
+    if (observaciones) {
+      const parsed = JSON.parse(observaciones)
+      console.log(`📋 Obtenidas ${parsed.length} observaciones`)
+      return parsed
+    }
+    return []
+  } catch (error) {
+    console.error('❌ Error al obtener observaciones:', error)
+    return []
+  }
+}
+
+/**
+ * Obtiene observaciones por sílabo ID
+ * @param {string} silaboId - ID del sílabo
+ * @returns {Array} Observaciones del sílabo
+ */
+export function obtenerObservacionesPorSilabo(silaboId) {
+  const todasObservaciones = obtenerTodasObservaciones()
+  return todasObservaciones.filter(obs => obs.silaboId === silaboId)
+}
+
+/**
+ * Obtiene observaciones por profesor
+ * @param {string} profesorId - ID del profesor
+ * @returns {Array} Observaciones para el profesor
+ */
+export function obtenerObservacionesPorProfesor(profesorId) {
+  const todasObservaciones = obtenerTodasObservaciones()
+  const todosSilabos = obtenerTodosSilabos()
+
+  // Filtrar observaciones de sílabos creados por el profesor
+  return todasObservaciones.filter(obs => {
+    const silabo = todosSilabos.find(s => s.id === obs.silaboId)
+    return silabo?.metadata?.profesorId === profesorId
+  })
+}
+
+/**
+ * Obtener observaciones para profesor (versión simplificada)
+ * @returns {Array} Observaciones del profesor
+ */
+export function obtenerObservacionesParaProfesor() {
+  const profesorId = obtenerProfesorActual() || 'default'
+  return obtenerObservacionesPorProfesor(profesorId)
+}
+
+/**
+ * Marcar observación como vista
+ * @param {string} observacionId - ID de la observación
+ * @returns {Object} Resultado de la operación
+ */
+export function marcarObservacionVista(observacionId) {
+  try {
+    const todasObservaciones = obtenerTodasObservaciones()
+    const indice = todasObservaciones.findIndex(obs => obs.id === observacionId)
+
+    if (indice === -1) {
+      return {
+        success: false,
+        message: 'Observación no encontrada'
+      }
+    }
+
+    // Marcar como vista/leída
+    todasObservaciones[indice].visto = true
+    todasObservaciones[indice].leida = true // Compatibilidad
+    todasObservaciones[indice].fechaVisto = new Date().toISOString()
+    todasObservaciones[indice].fechaLectura = new Date().toISOString() // Compatibilidad
+
+    // Guardar cambios en observaciones principales
+    localStorage.setItem(STORAGE_KEYS.OBSERVACIONES, JSON.stringify(todasObservaciones))
+
+    // Actualizar también para profesor (compatibilidad)
+    const observacionesProfesor = obtenerObservacionesParaProfesorStorage()
+    const indiceProfesor = observacionesProfesor.findIndex(obs => obs.id === observacionId)
+    if (indiceProfesor !== -1) {
+      observacionesProfesor[indiceProfesor].leida = true
+      observacionesProfesor[indiceProfesor].fechaLectura = new Date().toISOString()
+      localStorage.setItem(STORAGE_KEYS.OBSERVACIONES_PROFESOR, JSON.stringify(observacionesProfesor))
+    }
+
+    console.log('👁️ Observación marcada como vista:', observacionId)
+
+    return {
+      success: true,
+      message: 'Observación marcada como vista'
+    }
+  } catch (error) {
+    console.error('❌ Error al marcar observación como vista:', error)
+    return {
+      success: false,
+      message: 'Error al marcar observación como vista',
+      error: error.message
+    }
+  }
+}
+
+/**
+ * Marcar observación como leída (compatible con el código proporcionado)
+ * @param {string} observacionId - ID de la observación
+ * @returns {Object} Resultado de la operación
+ */
+export function marcarObservacionLeida(observacionId) {
+  return marcarObservacionVista(observacionId)
+}
+
+/**
+ * Guardar observación para profesor (privado) - compatibilidad
+ */
+function guardarObservacionParaProfesor(observacion) {
+  try {
+    const observacionesProfesor = obtenerObservacionesParaProfesorStorage()
+    observacionesProfesor.push(observacion)
+    localStorage.setItem(STORAGE_KEYS.OBSERVACIONES_PROFESOR, JSON.stringify(observacionesProfesor))
+    console.log('📝 Observación guardada para profesor:', observacion.id)
+  } catch (error) {
+    console.error('❌ Error al guardar observación para profesor:', error)
+  }
+}
+
+/**
+ * Obtener observaciones para profesor desde storage específico - compatibilidad
+ */
+function obtenerObservacionesParaProfesorStorage() {
+  try {
+    const observaciones = localStorage.getItem(STORAGE_KEYS.OBSERVACIONES_PROFESOR)
+    return observaciones ? JSON.parse(observaciones) : []
+  } catch (error) {
+    console.error('❌ Error al obtener observaciones para profesor:', error)
+    return []
+  }
+}
+
+/**
+ * Función auxiliar para obtener el profesor actual
+ * Esto debería venir de un servicio de autenticación
+ */
+function obtenerProfesorActual() {
+  try {
+    const usuario = localStorage.getItem('current_user')
+    if (usuario) {
+      const parsed = JSON.parse(usuario)
+      return parsed.id || parsed.username || null
+    }
+
+    // También intentar obtener de metadata del sílabo si no hay usuario activo
+    const todosSilabos = obtenerTodosSilabos()
+    if (todosSilabos.length > 0) {
+      return todosSilabos[0].metadata?.profesorId || null
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error al obtener profesor actual:', error)
+    return null
+  }
+}
+
+/**
+ * Obtiene estadísticas para decanato
+ * @returns {Object} Estadísticas
+ */
+export function obtenerEstadisticasDecanato() {
+  const todosSilabos = obtenerTodosSilabos()
+  const todasObservaciones = obtenerTodasObservaciones()
+
+  const conteoPorEstado = todosSilabos.reduce((acum, silabo) => {
+    const estado = silabo.metadata?.estado || 'pendiente'
+    acum[estado] = (acum[estado] || 0) + 1
+    return acum
+  }, {})
+
+  return {
+    total: todosSilabos.length,
+    pendientes: conteoPorEstado.pendiente || 0,
+    enRevision: conteoPorEstado.revision || 0,
+    aprobados: conteoPorEstado.aprobado || 0,
+    observados: conteoPorEstado.observado || 0,
+    totalObservaciones: todasObservaciones.length,
+    observacionesNoLeidas: todasObservaciones.filter(obs => !obs.leida && !obs.visto).length,
+    ultimaRevision: obtenerFechaUltimaRevision(todosSilabos)
+  }
+}
+
+function obtenerFechaUltimaRevision(silabos) {
+  const silabosRevisados = silabos.filter(s =>
+    s.metadata?.estado === 'aprobado' || s.metadata?.estado === 'observado'
+  )
+
+  if (silabosRevisados.length === 0) return null
+
+  return silabosRevisados.reduce((masReciente, silabo) => {
+    const fecha = new Date(silabo.metadata?.fechaRevision || 0)
+    const fechaReciente = new Date(masReciente.metadata?.fechaRevision || 0)
+    return fecha > fechaReciente ? silabo : masReciente
+  }).metadata?.fechaRevision
+}
+
+// ==============================================
 // FUNCIONES PARA LIMPIEZA Y UTILIDAD
 // ==============================================
 
@@ -488,11 +838,13 @@ export function obtenerEstadisticas() {
     const todosSilabos = obtenerTodosSilabos()
     const datosGenerales = obtenerDatosGenerales()
     const borrador = obtenerEstructuraConceptual()
+    const observaciones = obtenerTodasObservaciones()
 
     return {
       totalSilabos: todosSilabos.length,
       tieneDatosGenerales: !!datosGenerales,
       tieneBorrador: !!borrador,
+      totalObservaciones: observaciones.length,
       silabosPorEstado: contarSilabosPorEstado(todosSilabos),
       ultimoSilabo: todosSilabos.length > 0 ? todosSilabos[todosSilabos.length - 1] : null
     }
@@ -532,11 +884,26 @@ export default {
 
   // Sílabos completos
   guardarSilaboCompleto,
-  actualizarSilaboCompleto,  // ← NUEVA FUNCIÓN PARA EDICIÓN
+  actualizarSilaboCompleto,
   obtenerTodosSilabos,
   obtenerSilaboPorId,
   actualizarSilabo,
   eliminarSilabo,
+
+  // Funciones para Decanato
+  obtenerSilabosPorEstado,
+  cambiarEstadoSilabo,
+
+  // Observaciones
+  agregarObservacion,
+  guardarObservacion, // Alias para compatibilidad
+  obtenerTodasObservaciones,
+  obtenerObservacionesPorSilabo,
+  obtenerObservacionesPorProfesor,
+  obtenerObservacionesParaProfesor,
+  marcarObservacionVista,
+  marcarObservacionLeida, // Alias para compatibilidad
+  obtenerEstadisticasDecanato,
 
   // Utilidades
   eliminarDatosTemporales,

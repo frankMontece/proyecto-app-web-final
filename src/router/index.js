@@ -53,7 +53,36 @@ const router = createRouter({
           path: 'dashboard',
           name: 'dean-dashboard',
           component: () => import('@/views/dean/DashboardView.vue')
+        },
+        // ============================================
+        // NUEVAS RUTAS PARA DECANATO - PASO 3
+        // ============================================
+        {
+          path: 'revisar-silabos',
+          name: 'revisar-silabos',
+          component: () => import('@/views/dean/RevisarSilabosView.vue'),
+          meta: { requiresAuth: true, role: 'decanato' }
+        },
+        {
+          path: 'silabo/:id',
+          name: 'detalle-silabo',
+          component: () => import('@/views/dean/DetalleSilaboView.vue'),
+          props: true,
+          meta: { requiresAuth: true, role: 'decanato' }
+        },
+        {
+          path: 'observaciones',
+          name: 'observaciones-decanato',
+          component: () => import('@/views/dean/ObservacionesView.vue'),
+          meta: { requiresAuth: true, role: 'decanato' }
+        },
+        {
+          path: 'aprobados',
+          name: 'silabos-aprobados',
+          component: () => import('@/views/dean/SilabosAprobadosView.vue'),
+          meta: { requiresAuth: true, role: 'decanato' }
         }
+        // ============================================
       ]
     },
     {

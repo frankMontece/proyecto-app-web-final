@@ -5,25 +5,25 @@
       <p>Bienvenido/a, {{ authStore.user?.name }}</p>
       <p>Departamento: {{ authStore.user?.department }}</p>
     </div>
-    
+
     <div class="quick-actions">
       <h2>Acciones Rápidas</h2>
       <div class="actions-grid">
-        <router-link to="#" class="action-card">
+        <router-link to="/dean/revisar-silabos" class="action-card">
           <h3>Revisar Sílabos</h3>
           <p>Ver sílabos pendientes de revisión</p>
         </router-link>
-        <router-link to="#" class="action-card">
+        <router-link to="/dean/aprobados" class="action-card">
           <h3>Sílabos Aprobados</h3>
           <p>Historial de sílabos aprobados</p>
         </router-link>
-        <router-link to="#" class="action-card">
+        <router-link to="/dean/observaciones" class="action-card">
           <h3>Enviar Observaciones</h3>
           <p>Realizar comentarios sobre sílabos</p>
         </router-link>
       </div>
     </div>
-    
+
     <button @click="logout" class="logout-button">Cerrar Sesión</button>
   </div>
 </template>

@@ -215,8 +215,10 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import silaboStorage from '@/services/silaboStorage'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 // Variables para modo edición
 const esModoEdicion = ref(false)
@@ -378,8 +380,8 @@ const guardarYFinalizar = () => {
         datosGenerales,
         estructuraConceptual,
         {
-          profesor: 'profesor_actual',
-          estado: 'completado'
+          profesor: authStore.user?.name || 'Profesor',
+          estado: 'pendiente'
         }
       )
     }
